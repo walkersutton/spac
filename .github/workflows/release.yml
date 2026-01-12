@@ -1,0 +1,38 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: Build and Release
+    runs-on: macos-latest
+    permissions:
+      contents: write
+      
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Build App
+        # Use Release configuration and put outputs in a known directory
+        run: |
+          xcodebuild -scheme spac \
+            -configuration Release \
+            -derivedDataPath build
+            
+      - name: Compress App
+        # Navigate to the build output and zip the .app bundle
+        run: |
+          cd build/Build/Products/Release
+          zip -r ../../../../spac.zip spac.app
+          
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: spac.zip
+          draft: true
+          prerelease: false
+          generate_release_notes: true
