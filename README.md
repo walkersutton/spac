@@ -29,6 +29,14 @@ xcodebuild -scheme spac \
   -derivedDataPath build
 ```
 
+### Devving
+
+```sh
+killall spac
+xcodebuild
+open ./build/Release/spac.app
+```
+
 ## 📦 Releasing
 
 1. Tag the commit: `git tag v1.0.0`
