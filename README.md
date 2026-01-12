@@ -13,22 +13,26 @@
 
 ## 🚀 Installation
 
-### Homebrew
+### Download the DMG
 
-```sh
-brew install walkersutton/tap/spac
-```
-
-### Manual Installation
-
-1. Download the latest `spac.zip` from the [Releases](https://github.com/walkersutton/spac/releases) page.
-2. Unzip and move `spac.app` to your `/Applications` folder.
+1. Download the latest `spac.dmg` from the [Releases](https://github.com/walkersutton/spac/releases) page.
+2. Open the DMG and drag `spac.app` to your Applications folder.
 3. **Right-Click** on `spac.app` and select **Open** to bypass the "unidentified developer" warning (Ad-Hoc signed).
 
-## 🛠️ Deployment
+## 🛠️ Development
+
+### Building from Source
+
+```sh
+xcodebuild -scheme spac \
+  -configuration Release \
+  -derivedDataPath build
+```
+
+## 📦 Releasing
 
 1. Tag the commit: `git tag v1.0.0`
 2. Push the tag: `git push origin v1.0.0`
-3. A draft release will be created automatically in the [Releases page](https://github.com/walkersutton/spac/releases).
+3. A draft release with `spac.dmg` and `spac.zip` will be created automatically in the [Releases page](https://github.com/walkersutton/spac/releases).
 
 

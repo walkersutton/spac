@@ -23,7 +23,6 @@ struct ContentView: View {
 				.saturation(1.2)
 				.blur(radius: 10)
 				.frame(width: width, height: height)
-				.backgroundExtensionEffect()
 		}
 		.ignoresSafeArea()
 	}

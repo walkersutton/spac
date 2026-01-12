@@ -21,7 +21,10 @@ jobs:
         run: |
           xcodebuild -scheme spac \
             -configuration Release \
-            -derivedDataPath build
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_IDENTITY="" \
+            CODE_SIGN_STYLE=Manual
             
       - name: Compress App
         # Navigate to the build output and zip the .app bundle
@@ -29,10 +32,29 @@ jobs:
           cd build/Build/Products/Release
           zip -r ../../../../spac.zip spac.app
           
+      - name: Install create-dmg
+        run: brew install create-dmg
+          
+      - name: Create DMG
+        run: |
+          create-dmg \
+            --volname "spac" \
+            --volicon "assets/logo.png" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 100 \
+            --icon "spac.app" 175 190 \
+            --hide-extension "spac.app" \
+            --app-drop-link 425 190 \
+            "spac.dmg" \
+            "build/Build/Products/Release/spac.app"
+          
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: spac.zip
+          files: |
+            spac.zip
+            spac.dmg
           draft: true
           prerelease: false
           generate_release_notes: true
