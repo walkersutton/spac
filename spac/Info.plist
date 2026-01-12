@@ -4,5 +4,7 @@
 <dict>
 	<key>LSUIElement</key>
 	<true/>
+	<key>NSAccessibilityUsageDescription</key>
+	<string>spac needs Accessibility permissions to monitor the Caps Lock key and display the HUD indicator.</string>
 </dict>
 </plist>

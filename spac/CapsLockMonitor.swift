@@ -6,13 +6,75 @@ final class CapsLockMonitor {
 	private var eventTap: CFMachPort?
 	private var eventTapRunLoopSource: CFRunLoopSource?
     private var lastCapsOn: Bool?
+	private var permissionCheckTimer: Timer?
+	private var hasShownPermissionAlert = false
 
 	var onChange: ((Bool) -> Void)?
 
 	func start() {
 		stop()
-		requestAccessibilityTrustIfNeeded()
-		installEventTap()
+		checkAndRequestPermissions()
+	}
+	
+	private func checkAndRequestPermissions() {
+		let isTrusted = AXIsProcessTrusted()
+		
+		if isTrusted {
+			// Permissions granted, start monitoring
+			installEventTap()
+			stopPermissionMonitoring()
+		} else {
+			// Request permissions with prompt
+			let options: CFDictionary = [kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: true] as CFDictionary
+			_ = AXIsProcessTrustedWithOptions(options)
+			
+			// Start monitoring for permission changes FIRST (before showing alert)
+			// This ensures the timer is running even if the alert blocks
+			startPermissionMonitoring()
+			
+			// Show alert to guide user
+			if !hasShownPermissionAlert {
+				hasShownPermissionAlert = true
+				showPermissionAlert()
+			}
+		}
+	}
+	
+	private func showPermissionAlert() {
+		DispatchQueue.main.async {
+			let alert = NSAlert()
+			alert.messageText = "Accessibility Permission Required"
+			alert.informativeText = "spac needs Accessibility permissions to monitor your Caps Lock key. Please enable it in System Settings."
+			alert.alertStyle = .informational
+			alert.addButton(withTitle: "Open System Settings")
+			alert.addButton(withTitle: "OK")
+			
+			let response = alert.runModal()
+			if response == .alertFirstButtonReturn {
+				// Open System Settings to Accessibility pane
+				if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+					NSWorkspace.shared.open(url)
+				}
+			}
+		}
+	}
+	
+	private func startPermissionMonitoring() {
+		// Check every 2 seconds if permissions have been granted
+		permissionCheckTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+			guard let self = self else { return }
+			
+			if AXIsProcessTrusted() {
+				print("[CapsLockMonitor] Permissions granted! Starting event tap...")
+				self.installEventTap()
+				self.stopPermissionMonitoring()
+			}
+		}
+	}
+	
+	private func stopPermissionMonitoring() {
+		permissionCheckTimer?.invalidate()
+		permissionCheckTimer = nil
 	}
 
 	func stop() {
@@ -24,11 +86,7 @@ final class CapsLockMonitor {
 		}
 		eventTapRunLoopSource = nil
 		eventTap = nil
-	}
-
-	private func requestAccessibilityTrustIfNeeded() {
-		let options: CFDictionary = [kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: true] as CFDictionary
-		_ = AXIsProcessTrustedWithOptions(options)
+		stopPermissionMonitoring()
 	}
 
 	private func installEventTap() {
