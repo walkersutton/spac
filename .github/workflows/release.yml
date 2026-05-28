@@ -15,6 +15,21 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Derive Version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Release tags must use vMAJOR.MINOR.PATCH, got ${GITHUB_REF_NAME}"
+            exit 1
+          fi
+
+          IFS=. read -r MAJOR MINOR PATCH <<< "$VERSION"
+          BUILD_NUMBER=$((MAJOR * 10000 + MINOR * 100 + PATCH))
+
+          echo "MARKETING_VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "CURRENT_PROJECT_VERSION=$BUILD_NUMBER" >> "$GITHUB_ENV"
       
       - name: Build App
         # Use Release configuration and put outputs in a known directory
@@ -22,6 +37,8 @@ jobs:
           xcodebuild -scheme spac \
             -configuration Release \
             -derivedDataPath build \
+            MARKETING_VERSION="$MARKETING_VERSION" \
+            CURRENT_PROJECT_VERSION="$CURRENT_PROJECT_VERSION" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_IDENTITY="" \
             CODE_SIGN_STYLE=Manual
@@ -81,6 +98,6 @@ jobs:
             spac.zip
             spac.dmg
             release-assets/appcast.xml
-          draft: true
+          draft: false
           prerelease: false
           generate_release_notes: true
