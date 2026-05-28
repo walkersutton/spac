@@ -1,6 +1,7 @@
 import Cocoa
 import SwiftUI
 
+@MainActor
 final class InfoWindowController: NSWindowController {
 	convenience init() {
 		let windowSize = NSSize(width: 400, height: 200)
@@ -70,7 +71,7 @@ final class InfoWindowController: NSWindowController {
 
 		let settingsTab = NSTabViewItem(identifier: "Settings")
 		settingsTab.label = "Settings"
-		let hosting = NSHostingView(rootView: SettingsView(prefs: .shared))
+		let hosting = NSHostingView(rootView: SettingsView(prefs: .shared, updateController: .shared))
 		hosting.frame = contentView.bounds
 		hosting.autoresizingMask = [.width, .height]
 		settingsTab.view = hosting
@@ -80,5 +81,4 @@ final class InfoWindowController: NSWindowController {
 		contentView.addSubview(tabView)
 	}
 }
-
 

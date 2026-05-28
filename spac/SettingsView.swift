@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
 	@ObservedObject var prefs: PreferencesStore
+	@ObservedObject var updateController: UpdateController
 
 	var body: some View {
 		VStack(spacing: 0) {
@@ -33,6 +34,16 @@ struct SettingsView: View {
 				Toggle("Launch at Login", isOn: $prefs.launchAtLogin)
 				Toggle("Show Menu Bar Icon", isOn: $prefs.showMenuBarIcon)
 				Toggle("Show Icon in Dock", isOn: $prefs.showDockIcon)
+				
+				Divider()
+					.padding(.vertical, 4)
+				
+				Button {
+					updateController.checkForUpdates()
+				} label: {
+					Text("Check for Updates...")
+						.frame(minWidth: 140)
+				}
 			}
 			.toggleStyle(.checkbox)
 			.padding(30)
@@ -67,5 +78,4 @@ struct SettingsView: View {
 		.frame(width: 400, height: 360)
 	}
 }
-
 

@@ -2,10 +2,12 @@ import SwiftUI
 import Cocoa
 import Combine
 
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
 	var statusItem: NSStatusItem?
 	private let hudController = HUDController()
 	private let capsMonitor = CapsLockMonitor()
+	private let updateController = UpdateController.shared
     private var prefs = PreferencesStore.shared
     private var subscriptions = Set<AnyCancellable>()
     private var settingsWindow: NSWindow?
@@ -34,8 +36,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }.store(in: &subscriptions)
         
-        // Open settings on launch
-        showSettings()
 	}
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
@@ -78,7 +78,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.setFrameAutosaveName("Settings")
         window.title = "spac Settings"
         window.isReleasedWhenClosed = false
-        window.contentView = NSHostingView(rootView: SettingsView(prefs: prefs))
+        window.contentView = NSHostingView(rootView: SettingsView(prefs: prefs, updateController: updateController))
         
         self.settingsWindow = window
         window.makeKeyAndOrderFront(nil)

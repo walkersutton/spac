@@ -30,7 +30,7 @@ jobs:
         # Navigate to the build output and zip the .app bundle
         run: |
           cd build/Build/Products/Release
-          zip -r ../../../../spac.zip spac.app
+          ditto -c -k --keepParent spac.app ../../../../spac.zip
           
       - name: Install create-dmg
         run: brew install create-dmg
@@ -48,6 +48,26 @@ jobs:
             --app-drop-link 425 190 \
             "spac.dmg" \
             "build/Build/Products/Release/spac.app"
+
+      - name: Generate Sparkle Appcast
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+          DOWNLOAD_URL_PREFIX: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/
+        run: |
+          if [ -z "${SPARKLE_PRIVATE_KEY:-}" ]; then
+            echo "::error::Missing SPARKLE_PRIVATE_KEY secret"
+            exit 1
+          fi
+
+          mkdir -p release-assets
+          cp spac.dmg release-assets/spac.dmg
+
+          echo "$SPARKLE_PRIVATE_KEY" | \
+            build/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_appcast \
+              --ed-key-file - \
+              --download-url-prefix "$DOWNLOAD_URL_PREFIX" \
+              --link "https://github.com/${{ github.repository }}" \
+              release-assets
           
       - name: Create Release
         uses: softprops/action-gh-release@v1
@@ -55,6 +75,7 @@ jobs:
           files: |
             spac.zip
             spac.dmg
+            release-assets/appcast.xml
           draft: true
           prerelease: false
           generate_release_notes: true
