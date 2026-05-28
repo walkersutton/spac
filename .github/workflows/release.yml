@@ -25,6 +25,11 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_IDENTITY="" \
             CODE_SIGN_STYLE=Manual
+
+      - name: Sign App
+        run: |
+          codesign --force --deep --sign - "build/Build/Products/Release/spac.app"
+          codesign --verify --deep --strict --verbose=2 "build/Build/Products/Release/spac.app"
             
       - name: Compress App
         # Navigate to the build output and zip the .app bundle
