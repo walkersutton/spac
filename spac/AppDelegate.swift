@@ -67,19 +67,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.activate(ignoringOtherApps: true)
             return
         }
-        
-        let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 400, height: 360),
-            styleMask: [.titled, .closable, .miniaturizable, .fullSizeContentView],
+
+        let window = SettingsWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 620, height: 490),
+            styleMask: [.titled, .closable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
         window.center()
-        window.setFrameAutosaveName("Settings")
-        window.title = "spac Settings"
+        window.title = "spac"
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
         window.isReleasedWhenClosed = false
         window.contentView = NSHostingView(rootView: SettingsView(prefs: prefs, updateController: updateController))
-        
+
         self.settingsWindow = window
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
@@ -89,6 +90,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.terminate(nil)
     }
 
+}
+
+private class SettingsWindow: NSWindow {
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if event.modifierFlags.intersection(.deviceIndependentFlagsMask) == .command,
+           event.charactersIgnoringModifiers?.lowercased() == "w" {
+            performClose(nil)
+            return true
+        }
+        return super.performKeyEquivalent(with: event)
+    }
 }
 
 extension CALayer {
