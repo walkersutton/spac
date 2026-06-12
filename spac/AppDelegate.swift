@@ -10,7 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 	private let updateController = UpdateController.shared
     private var prefs = PreferencesStore.shared
     private var subscriptions = Set<AnyCancellable>()
-    private var settingsWindow: NSWindow?
+    private var infoWindowController: InfoWindowController?
 
 	func applicationDidFinishLaunching(_ notification: Notification) {
 		
@@ -24,16 +24,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // React to preferences
         prefs.$showMenuBarIcon.sink { [weak self] show in
             self?.statusItem?.isVisible = show
-        }.store(in: &subscriptions)
-        
-        prefs.$showDockIcon.sink { show in
-            let policy: NSApplication.ActivationPolicy = show ? .regular : .accessory
-            NSApp.setActivationPolicy(policy)
-            // If switching to regular, we usually need to force an activation signal
-            // for the icon to reliably snap into the Dock.
-            if show {
-                NSApp.activate(ignoringOtherApps: true)
-            }
         }.store(in: &subscriptions)
         
 	}
@@ -62,26 +52,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     @objc private func showSettings() {
-        if let window = settingsWindow {
-            window.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
-            return
+        if infoWindowController == nil {
+            infoWindowController = InfoWindowController()
         }
-        
-        let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 400, height: 360),
-            styleMask: [.titled, .closable, .miniaturizable, .fullSizeContentView],
-            backing: .buffered,
-            defer: false
-        )
-        window.center()
-        window.setFrameAutosaveName("Settings")
-        window.title = "spac Settings"
-        window.isReleasedWhenClosed = false
-        window.contentView = NSHostingView(rootView: SettingsView(prefs: prefs, updateController: updateController))
-        
-        self.settingsWindow = window
-        window.makeKeyAndOrderFront(nil)
+        infoWindowController?.window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
     

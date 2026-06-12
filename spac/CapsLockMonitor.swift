@@ -13,33 +13,24 @@ final class CapsLockMonitor {
 
 	func start() {
 		stop()
-		checkAndRequestPermissions()
+		checkPermissions()
 	}
-	
-	private func checkAndRequestPermissions() {
-		let isTrusted = AXIsProcessTrusted()
-		
-		if isTrusted {
-			// Permissions granted, start monitoring
+
+	private func checkPermissions() {
+		if AXIsProcessTrusted() {
 			installEventTap()
-			stopPermissionMonitoring()
 		} else {
-			// Request permissions with prompt
-			let options: CFDictionary = [kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: true] as CFDictionary
-			_ = AXIsProcessTrustedWithOptions(options)
-			
-			// Start monitoring for permission changes FIRST (before showing alert)
-			// This ensures the timer is running even if the alert blocks
-			startPermissionMonitoring()
-			
-			// Show alert to guide user
-			if !hasShownPermissionAlert {
-				hasShownPermissionAlert = true
-				showPermissionAlert()
-			}
+			// TCC can return false for several seconds on boot even when permission is
+			// granted. Wait up to 10 seconds before concluding it is actually denied.
+			startPermissionMonitoring(gracePeriod: 10.0)
 		}
 	}
-	
+
+	private func requestAccessibilityPermissionPrompt() {
+		let options: CFDictionary = [kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: true] as CFDictionary
+		_ = AXIsProcessTrustedWithOptions(options)
+	}
+
 	private func showPermissionAlert() {
 		DispatchQueue.main.async {
 			let alert = NSAlert()
@@ -48,30 +39,32 @@ final class CapsLockMonitor {
 			alert.alertStyle = .informational
 			alert.addButton(withTitle: "Open System Settings")
 			alert.addButton(withTitle: "OK")
-			
+
 			let response = alert.runModal()
 			if response == .alertFirstButtonReturn {
-				// Open System Settings to Accessibility pane
 				if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
 					NSWorkspace.shared.open(url)
 				}
 			}
 		}
 	}
-	
-	private func startPermissionMonitoring() {
-		// Check every 2 seconds if permissions have been granted
+
+	private func startPermissionMonitoring(gracePeriod: TimeInterval) {
+		let startTime = Date()
 		permissionCheckTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
 			guard let self = self else { return }
-			
+
 			if AXIsProcessTrusted() {
-				print("[CapsLockMonitor] Permissions granted! Starting event tap...")
 				self.installEventTap()
 				self.stopPermissionMonitoring()
+			} else if !self.hasShownPermissionAlert && Date().timeIntervalSince(startTime) >= gracePeriod {
+				self.hasShownPermissionAlert = true
+				self.requestAccessibilityPermissionPrompt()
+				self.showPermissionAlert()
 			}
 		}
 	}
-	
+
 	private func stopPermissionMonitoring() {
 		permissionCheckTimer?.invalidate()
 		permissionCheckTimer = nil

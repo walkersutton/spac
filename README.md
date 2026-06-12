@@ -32,15 +32,15 @@ xcodebuild -scheme spac \
 ### Devving
 
 ```sh
-killall spac
-xcodebuild
-open ./build/Release/spac.app
+make preview
 ```
 
 ## 📦 Releasing
 
-1. Tag the commit: `git tag v1.0.0`
-2. Push the tag: `git push origin v1.0.0`
-3. A draft release with `spac.dmg` and `spac.zip` will be created automatically in the [Releases page](https://github.com/walkersutton/spac/releases).
+1. Commit or stash any local changes.
+2. Run `make release-patch`, `make release-minor`, or `make release-major`.
+3. A GitHub release with `spac.dmg`, `spac.zip`, and `appcast.xml` will be created automatically.
 
+Use `scripts/bump-version.sh` with no arguments to keep the public version and increment only the build number. Use `scripts/bump-version.sh --print` to show the current version.
 
+Use `scripts/release.sh 1.2.3` to release a specific version. Release versions use `MAJOR.MINOR.PATCH`; each release automatically increments the build number, commits the version bump, tags the commit, and pushes the branch and tag.
