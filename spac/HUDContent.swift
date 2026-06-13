@@ -32,20 +32,33 @@ struct HUDContent: View {
 /// legibility); older systems fall back to a hand-tuned glass material.
 private struct LiquidGlassPill: ViewModifier {
 	func body(content: Content) -> some View {
+		// `glassEffect` only exists in the macOS 26 SDK (Xcode 26 / Swift 6.2).
+		// The compiler guard keeps this buildable on older toolchains, where the
+		// symbol is absent from the SDK and a runtime `#available` check alone
+		// would still fail to compile.
+		#if compiler(>=6.2)
 		if #available(macOS 26.0, *) {
 			content
 				// `.primary` lets the glass drive vibrancy/contrast for us.
 				.foregroundStyle(.primary)
 				.glassEffect(.regular, in: .capsule)
 		} else {
-			content
-				.foregroundStyle(.white.opacity(0.95))
-				.background { LegacyGlassBackground() }
-				.clipShape(Capsule(style: .continuous))
-				.overlay { SpecularRim() }
-				.shadow(color: .black.opacity(0.22), radius: 14, x: 0, y: 7)
-				.shadow(color: .black.opacity(0.10), radius: 2, x: 0, y: 1)
+			legacy(content)
 		}
+		#else
+		legacy(content)
+		#endif
+	}
+
+	@ViewBuilder
+	private func legacy(_ content: Content) -> some View {
+		content
+			.foregroundStyle(.white.opacity(0.95))
+			.background { LegacyGlassBackground() }
+			.clipShape(Capsule(style: .continuous))
+			.overlay { SpecularRim() }
+			.shadow(color: .black.opacity(0.22), radius: 14, x: 0, y: 7)
+			.shadow(color: .black.opacity(0.10), radius: 2, x: 0, y: 1)
 	}
 }
 
