@@ -14,7 +14,7 @@ jobs:
       
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Select Newest Xcode
         # The Liquid Glass HUD compiles its native `glassEffect` path only with
@@ -108,7 +108,7 @@ jobs:
               release-assets
           
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             spac.zip
